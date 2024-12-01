@@ -1,139 +1,130 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Estrutura do nó da pilha
 struct Node {
     int data;
-    struct Node* next;
+    struct Node *left;
+    struct Node *right;
 };
 
-// Inicializa a pilha
-void initialize(struct Node** top_ref) {
-    *top_ref = NULL;
+struct Node* init() {
+    return NULL;
 }
 
-// Função push - insere elemento no topo
-void push(struct Node** top_ref, int new_data) {
-    struct Node* new_node = (struct Node*)malloc(sizeof(struct Node));
-    
-    if (!new_node) {
-        printf("Erro: Memória insuficiente.\n");
-        return;
+struct Node* create(int data) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    if (!newNode) { 
+        printf("Erro ao alocar memória.\n"); 
+        return NULL; 
     }
-    
-    new_node->data = new_data;
-    new_node->next = *top_ref;
-    *top_ref = new_node;
+    newNode->data = data;
+    newNode->left = newNode->right = NULL;
+    return newNode;
 }
 
-// Função pop - remove e retorna elemento do topo
-int pop(struct Node** top_ref) {
-    if (*top_ref == NULL) {
-        printf("Erro: Pilha vazia.\n");
-        return -1;
-    }
-    
-    struct Node* temp = *top_ref;
-    int popped_data = temp->data;
-    *top_ref = temp->next;
-    free(temp);
-    
-    return popped_data;
-}
+struct Node* insert(struct Node* root, int data) {
+    struct Node* newNode = create(data);
+    if (root == NULL) return newNode;
 
-// Função que retorna o tamanho da pilha
-int getSize(struct Node* top) {
-    int size = 0;
-    struct Node* temp = top;
-    while (temp != NULL) {
-        size++;
-        temp = temp->next;
-    }
-    return size;
-}
+    struct Node* current = root;
+    struct Node* parent = NULL;
 
-// Função para reverter a pilha usando pilha auxiliar
-void reverseStackUsingAuxStack(struct Node** top_ref) {
-    // Cria pilha auxiliar
-    struct Node* aux_stack = NULL;
-    
-    // Obtém o tamanho da pilha original
-    int size = getSize(*top_ref);
-    
-    // Para cada posição da pilha original
-    for (int i = 0; i < size; i++) {
-        // Remove o elemento do topo
-        int current = pop(top_ref);
-        
-        // Move elementos da pilha auxiliar de volta para a original
-        for (int j = 0; j < size - i - 1; j++) {
-            push(&aux_stack, pop(top_ref));
-        }
-        
-        // Insere o elemento atual na posição correta
-        push(top_ref, current);
-        
-        // Devolve os elementos da pilha auxiliar para a original
-        while (aux_stack != NULL) {
-            push(top_ref, pop(&aux_stack));
-        }
-    }
-}
-
-// Função para exibir a pilha
-void printStack(struct Node* top) {
-    if (top == NULL) {
-        printf("Pilha vazia\n");
-        return;
-    }
-    
-    printf("Pilha: ");
-    struct Node* temp = top;
-    while (temp != NULL) {
-        printf("%d", temp->data);
-        if (temp->next != NULL) {
-            printf(" -> ");
-        }
-        temp = temp->next;
-    }
-    printf("\n");
-}
-
-// Função para liberar a memória
-void freeStack(struct Node** top_ref) {
-    struct Node* current = *top_ref;
-    struct Node* next;
-    
     while (current != NULL) {
-        next = current->next;
-        free(current);
-        current = next;
+        parent = current;
+        if (data < current->data)
+            current = current->left;
+        else if (data > current->data)
+            current = current->right;
+        else 
+            return root;
     }
-    
-    *top_ref = NULL;
+
+    if (data < parent->data)
+        parent->left = newNode;
+    else
+        parent->right = newNode;
+
+    return root;
+}
+
+struct Node* search(struct Node* root, int key) {
+    struct Node* current = root;
+
+    while (current != NULL && current->data != key) {
+        if (key < current->data)
+            current = current->left;
+        else
+            current = current->right;
+    }
+
+    return current;
+}
+
+int count(struct Node* root) {
+    if (root == NULL) return 0;
+
+    int count = 0;
+    struct Node* stack[100];
+    int top = -1;
+    struct Node* current = root;
+
+    while (current != NULL || top != -1) {
+        while (current != NULL) {
+            stack[++top] = current;
+            current = current->left;
+        }
+
+        current = stack[top--];
+        count++;
+        current = current->right;
+    }
+
+    return count;
+}
+
+void print(struct Node* root) {
+    if (root == NULL) return;
+
+    struct Node* stack[100]; 
+    int top = -1;
+    struct Node* current = root;
+
+    while (current != NULL || top != -1) {
+        while (current != NULL) {
+            stack[++top] = current;
+            current = current->left;
+        }
+
+        current = stack[top--];
+        printf("%d ", current->data);
+        current = current->right;
+    }
 }
 
 int main() {
-    struct Node* pilha = NULL;
-    initialize(&pilha);
+    struct Node* root = init();
+
+    root = insert(root, 50);
+    root = insert(root, 30);
+    root = insert(root, 70);
+    root = insert(root, 20);
+    root = insert(root, 40);
+    root = insert(root, 60);
+    root = insert(root, 80);
+
+    printf("Árvore em ordem: ");
+    print(root);
+    printf("\n");
     
-    // Inserindo elementos na pilha
-    push(&pilha, 1);  // base
-    push(&pilha, 2);
-    push(&pilha, 3);
-    push(&pilha, 4);  // topo
-    
-    printf("Pilha original:\n");
-    printStack(pilha);
-    
-    // Revertendo a pilha
-    reverseStackUsingAuxStack(&pilha);
-    
-    printf("\nPilha após reversão:\n");
-    printStack(pilha);
-    
-    // Liberando a memória
-    freeStack(&pilha);
-    
-    return 0;
+    int key = 40;
+    struct Node* found = search(root, key);
+    if (found) 
+        printf("Chave %d encontrada na árvore.\n", key);
+    else 
+        printf("Chave %d não encontrada na árvore.\n", key);
+
+    int total = count(root);
+    printf("Número de elementos na árvore: %d\n", total);
+
+ return 0;
 }
